@@ -31,3 +31,29 @@ def get_shipment(id: int | None = None) -> dict[str, Any]:
             detail=f"Shipment with ID {id} does not exist",
         )
     return shipments[id]
+
+@app.post("/shipment")
+def submit_shipment(content: str, weight: float) -> dict[str, int]:
+    # 如果重量超过限制，抛出异常
+    if weight > 25:
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+            detail="Maximum weight limit is 25 kg",
+        )
+
+    # 计算新的 ID
+    last_id = max(shipments.keys())
+    new_id = last_id + 1
+
+    # 构建新发货数据
+    new_shipment = {
+        "content": content,
+        "weight": weight,
+        "status": "placed",
+    }
+
+    # 添加到数据字典中
+    shipments[new_id] = new_shipment
+
+    # 返回新创建的 ID
+    return {"id": new_id}
