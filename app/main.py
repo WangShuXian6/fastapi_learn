@@ -30,25 +30,19 @@ def get_shipment(id: int | None = None) -> dict[str, Any]:
 
 
 @app.post("/shipment")
-def submit_shipment(data: dict[str, Any]) -> dict[str, Any]:
-    # 获取内容与重量
+def submit_shipment(weight: float, data: dict[str, str]) -> dict[str, Any]:
     content = data["content"]
-    weight = data["weight"]
 
-    # 重量校验
     if weight > 25:
         raise HTTPException(
             status_code=status.HTTP_406_NOT_ACCEPTABLE,
             detail="Maximum weight limit is 25 kg",
         )
 
-    # 创建新 ID
     new_id = max(shipments.keys()) + 1
     shipments[new_id] = {
         "content": content,
         "weight": weight,
         "status": "placed",
     }
-
-    # 返回新创建的发货 ID
     return {"id": new_id}
