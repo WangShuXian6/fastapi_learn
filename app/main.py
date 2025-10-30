@@ -50,3 +50,19 @@ def get_shipment(id: int) -> dict[str, Any]:
     if id not in shipments:
         return {"detail": f"Shipment with ID {id} does not exist"}
     return shipments[id]
+
+
+@app.get("/shipment")
+def get_shipment2(id: int):
+    if id not in shipments:
+        return {"detail": f"Shipment with ID {id} does not exist"}
+    return shipments[id]
+
+@app.get("/shipment")
+def get_shipment3(id: int | None = None) -> dict[str, Any]:
+    if id is None:
+        latest_id = max(shipments.keys())
+        return shipments[latest_id]
+    if id not in shipments:
+        return {"detail": f"Shipment with ID {id} does not exist"}
+    return shipments[id]
