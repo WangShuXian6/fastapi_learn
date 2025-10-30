@@ -1,31 +1,6 @@
 from typing import Any
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, status
 from scalar_fastapi import get_scalar_api_reference
-
-app = FastAPI()
-
-
-@app.get("/shipment")
-def get_shipment1():
-    return {
-        "content": "wooden table",
-        "status": "in transit",
-    }
-
-
-@app.get("/scalar", include_in_schema=False)
-def get_scalar_docs():
-    return get_scalar_api_reference(
-        openapi_url=app.openapi_url,
-        title="Scalar API",
-    )
-
-
-def root(number: int | float) -> float:
-    return number**0.5
-
-
-root(1)
 
 shipments = {
     1: {"content": "wooden table", "status": "in transit", "weight": 1.2},
@@ -37,32 +12,22 @@ shipments = {
     7: {"content": "desk lamp", "status": "processing", "weight": 0.9},
 }
 
-
-@app.get("/shipment/latest")
-def get_latest_shipment():
-    latest_id = max(shipments.keys())  # 获取最大 ID
-    return shipments[latest_id]  # 返回对应数据
+app = FastAPI()
 
 
-@app.get("/shipment/{id}")
-def get_shipment(id: int) -> dict[str, Any]:
-    # 判断给定 ID 是否存在
-    if id not in shipments:
-        return {"detail": f"Shipment with ID {id} does not exist"}
-    return shipments[id]
+@app.get("/scalar", include_in_schema=False)
+def get_scalar_docs():
+    return get_scalar_api_reference(
+        openapi_url=app.openapi_url,
+        title="Scalar API",
+    )
 
 
 @app.get("/shipment")
-def get_shipment2(id: int):
+def get_shipment(id: int | None = None) -> dict[str, Any]:
     if id not in shipments:
-        return {"detail": f"Shipment with ID {id} does not exist"}
-    return shipments[id]
-
-@app.get("/shipment")
-def get_shipment3(id: int | None = None) -> dict[str, Any]:
-    if id is None:
-        latest_id = max(shipments.keys())
-        return shipments[latest_id]
-    if id not in shipments:
-        return {"detail": f"Shipment with ID {id} does not exist"}
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Shipment with ID {id} does not exist",
+        )
     return shipments[id]
