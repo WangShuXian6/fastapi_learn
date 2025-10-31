@@ -23,7 +23,7 @@ def get_scalar_docs():
     )
 
 
-@app.get("/shipment")
+@app.get("/shipment", response_model=Shipment)
 def get_shipment(id: int | None = None) -> dict[str, Any]:
     if id not in shipments:
         raise HTTPException(
