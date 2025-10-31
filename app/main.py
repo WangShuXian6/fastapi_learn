@@ -1,5 +1,5 @@
 from typing import Any
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status  as http_status
 from scalar_fastapi import get_scalar_api_reference
 
 # 示例发货数据
@@ -24,7 +24,7 @@ def get_scalar_docs():
 def get_shipment(id: int | None = None) -> dict[str, Any]:
     if id not in shipments:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=http_status.HTTP_404_NOT_FOUND,
             detail=f"Shipment with ID {id} does not exist",
         )
     return shipments[id]
@@ -36,7 +36,7 @@ def get_shipment_field(field: str, id: int) -> Any:
     # 如果 ID 不存在，抛出异常
     if id not in shipments:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=http_status.HTTP_404_NOT_FOUND,
             detail=f"Shipment with ID {id} does not exist",
         )
 
@@ -45,9 +45,33 @@ def get_shipment_field(field: str, id: int) -> Any:
     # 如果字段不存在，抛出异常
     if field not in shipment:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=http_status.HTTP_404_NOT_FOUND,
             detail=f"Field '{field}' does not exist in shipment data",
         )
 
     # 返回该字段对应的值
     return shipment[field]
+
+@app.put("/shipment")
+def shipment_update(
+    id: int,
+    content: str,
+    weight: float,
+    status: str,
+) -> dict[str, Any]:
+    # 检查该 ID 是否存在
+    if id not in shipments:
+        raise HTTPException(
+            status_code=http_status.HTTP_404_NOT_FOUND,
+            detail=f"Shipment with ID {id} does not exist"
+        )
+
+    # 使用新数据替换旧数据
+    shipments[id] = {
+        "content": content,
+        "weight": weight,
+        "status": status
+    }
+
+    # 返回更新后的记录
+    return shipments[id]
