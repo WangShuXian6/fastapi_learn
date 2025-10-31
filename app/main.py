@@ -1,13 +1,8 @@
 from typing import Any
 from fastapi import FastAPI, HTTPException, status  as http_status
 from scalar_fastapi import get_scalar_api_reference
-from pydantic import BaseModel
-
-class Shipment(BaseModel):
-    content: str
-    weight: float
-    destination: int
-    email: str
+# from app.schemas import Shipment
+from .schemas import Shipment # 同目录 相对导入
 
 # 示例发货数据
 shipments = {
@@ -65,8 +60,6 @@ def submit_shipment(shipment: Shipment):
     print(shipment.content)
     print(shipment.weight)
     print(shipment.destination)
-    print(shipment.email)
-    print(shipment)
 
     # 模拟创建新发货
     new_id = 1001
