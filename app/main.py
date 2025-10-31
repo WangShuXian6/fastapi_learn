@@ -94,3 +94,18 @@ def patch_shipment(id: int, body: dict[str, Any]) -> dict[str, Any]:
     # 保存结果
     shipments[id] = shipment
     return shipment
+
+@app.delete("/shipment")
+def delete_shipment(id: int) -> dict[str, str]:
+    # 检查是否存在该 ID
+    if id not in shipments:
+        raise HTTPException(
+            status_code=http_status.HTTP_404_NOT_FOUND,
+            detail=f"Shipment with ID {id} does not exist"
+        )
+    
+    # 删除该发货数据并取出被删除的内容（可选）
+    deleted_shipment = shipments.pop(id)
+    
+    # 返回简单提示信息
+    return {"detail": f"Shipment with ID #{id} is deleted"}
