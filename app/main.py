@@ -75,3 +75,22 @@ def shipment_update(
 
     # 返回更新后的记录
     return shipments[id]
+
+
+@app.patch("/shipment")
+def patch_shipment(id: int, body: dict[str, Any]) -> dict[str, Any]:
+    # 检查 ID 是否存在
+    if id not in shipments:
+        raise HTTPException(
+            status_code=http_status.HTTP_404_NOT_FOUND,
+            detail=f"Shipment with ID {id} does not exist"
+        )
+
+    shipment = shipments[id]
+
+    # 使用 Python 的字典更新功能
+    shipment.update(body)
+
+    # 保存结果
+    shipments[id] = shipment
+    return shipment
