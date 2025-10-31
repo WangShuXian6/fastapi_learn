@@ -1,8 +1,9 @@
 from typing import Any
-from fastapi import FastAPI, HTTPException, status  as http_status
+from fastapi import FastAPI, HTTPException, status as http_status
 from scalar_fastapi import get_scalar_api_reference
+
 # from app.schemas import Shipment
-from .schemas import Shipment # 同目录 相对导入
+from .schemas import Shipment, ShipmentStatus  # 同目录 相对导入
 
 # 示例发货数据
 shipments = {
@@ -54,6 +55,7 @@ def get_shipment_field(field: str, id: int) -> Any:
     # 返回该字段对应的值
     return shipment[field]
 
+
 @app.post("/shipment")
 def submit_shipment(shipment: Shipment):
     # 访问字段
@@ -64,6 +66,7 @@ def submit_shipment(shipment: Shipment):
     # 模拟创建新发货
     new_id = 1001
     return {"id": new_id, "detail": "Shipment created successfully"}
+
 
 @app.put("/shipment")
 def shipment_update(
@@ -76,27 +79,23 @@ def shipment_update(
     if id not in shipments:
         raise HTTPException(
             status_code=http_status.HTTP_404_NOT_FOUND,
-            detail=f"Shipment with ID {id} does not exist"
+            detail=f"Shipment with ID {id} does not exist",
         )
 
     # 使用新数据替换旧数据
-    shipments[id] = {
-        "content": content,
-        "weight": weight,
-        "status": status
-    }
+    shipments[id] = {"content": content, "weight": weight, "status": status}
 
     # 返回更新后的记录
     return shipments[id]
 
 
 @app.patch("/shipment")
-def patch_shipment(id: int, body: dict[str, Any]) -> dict[str, Any]:
+def patch_shipment(id: int, body: dict[str, ShipmentStatus]) -> dict[str, Any]:
     # 检查 ID 是否存在
     if id not in shipments:
         raise HTTPException(
             status_code=http_status.HTTP_404_NOT_FOUND,
-            detail=f"Shipment with ID {id} does not exist"
+            detail=f"Shipment with ID {id} does not exist",
         )
 
     shipment = shipments[id]
@@ -108,17 +107,18 @@ def patch_shipment(id: int, body: dict[str, Any]) -> dict[str, Any]:
     shipments[id] = shipment
     return shipment
 
+
 @app.delete("/shipment")
 def delete_shipment(id: int) -> dict[str, str]:
     # 检查是否存在该 ID
     if id not in shipments:
         raise HTTPException(
             status_code=http_status.HTTP_404_NOT_FOUND,
-            detail=f"Shipment with ID {id} does not exist"
+            detail=f"Shipment with ID {id} does not exist",
         )
-    
+
     # 删除该发货数据并取出被删除的内容（可选）
     deleted_shipment = shipments.pop(id)
-    
+
     # 返回简单提示信息
     return {"detail": f"Shipment with ID #{id} is deleted"}
