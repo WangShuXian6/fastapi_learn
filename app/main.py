@@ -1,6 +1,13 @@
 from typing import Any
 from fastapi import FastAPI, HTTPException, status  as http_status
 from scalar_fastapi import get_scalar_api_reference
+from pydantic import BaseModel
+
+class Shipment(BaseModel):
+    content: str
+    weight: float
+    destination: int
+    email: str
 
 # 示例发货数据
 shipments = {
@@ -51,6 +58,19 @@ def get_shipment_field(field: str, id: int) -> Any:
 
     # 返回该字段对应的值
     return shipment[field]
+
+@app.post("/shipment")
+def submit_shipment(shipment: Shipment):
+    # 访问字段
+    print(shipment.content)
+    print(shipment.weight)
+    print(shipment.destination)
+    print(shipment.email)
+    print(shipment)
+
+    # 模拟创建新发货
+    new_id = 1001
+    return {"id": new_id, "detail": "Shipment created successfully"}
 
 @app.put("/shipment")
 def shipment_update(
