@@ -1,29 +1,33 @@
+from contextlib import asynccontextmanager
+from datetime import datetime, timedelta
+
 from fastapi import FastAPI, HTTPException, status
 from scalar_fastapi import get_scalar_api_reference
-from contextlib import asynccontextmanager
+
+from app.database.models import Shipment, ShipmentStatus
+from app.database.session import SessionDep, create_db_tables
+
 from .schemas import ShipmentCreate, ShipmentRead, ShipmentUpdate
-from .database import Database
 
-db = Database()
 
-# 新版 FastAPI 用一个 上下文管理器式的 lifespan 函数 来处理应用启动与关闭逻辑。
-# ✅ Lifespan 写法（取代 on_event）
 @asynccontextmanager
-async def lifespan(app: FastAPI):
-    print("🚀 App startup: connecting to database...")
-    db.connect_to_db()
-    db.create_table()
-    yield   # 👈 应用运行阶段
-    print("🛑 App shutdown: closing database...")
-    db.close()
+async def lifespan_handler(app: FastAPI):
+    create_db_tables()
+    yield
 
-# ✅ 把 lifespan 传给 FastAPI 实例
-app = FastAPI(lifespan=lifespan)
+# FastAPI App
+app = FastAPI(
+    # Server start/stop listener
+    lifespan=lifespan_handler,
+)
 
-###  a shipment by id
+
+### Read a shipment by id
 @app.get("/shipment", response_model=ShipmentRead)
-def get_shipment(id: int):
-    shipment = db.get(id)
+def get_shipment(id: int, session: SessionDep):
+    # Check for shipment with given id
+    shipment = session.get(Shipment, id)
+
     if shipment is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -35,26 +39,54 @@ def get_shipment(id: int):
 
 ### Create a new shipment with content and weight
 @app.post("/shipment", response_model=None)
-def submit_shipment(shipment: ShipmentCreate) -> dict[str, int]:
-    new_id = db.create(shipment)
-    # Return id for later use
-    return {"id": new_id}
+def submit_shipment(shipment: ShipmentCreate, session: SessionDep) -> dict[str, int]:
+    new_shipment = Shipment(
+        **shipment.model_dump(),
+        status=ShipmentStatus.placed,
+        estimated_delivery=datetime.now() + timedelta(days=3),
+    )
+    session.add(new_shipment)
+    session.commit()
+    session.refresh(new_shipment)
+
+    return {"id": new_shipment.id}
 
 
 ### Update fields of a shipment
 @app.patch("/shipment", response_model=ShipmentRead)
-def update_shipment(id: int, shipment: ShipmentUpdate):
+def update_shipment(id: int, shipment_update: ShipmentUpdate, session: SessionDep):
     # Update data with given fields
-    result = db.update(id, shipment)
-    return result
+    update = shipment_update.model_dump(exclude_none=True)
+
+    if not update:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No data provided to update",
+        )
+
+    shipment = session.get(Shipment, id)
+    if shipment is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Shipment with id #{id} not found",
+        )
+    shipment.sqlmodel_update(update)
+
+    session.add(shipment)
+    session.commit()
+    session.refresh(shipment)
+
+    return shipment
 
 
 ### Delete a shipment by id
 @app.delete("/shipment")
-def delete_shipment(id: int) -> dict[str, str]:
-    # Remove from datastore
-    db.delete(id)
-    return {"detail": "Shipment deleted successfully."}
+def delete_shipment(id: int, session: SessionDep) -> dict[str, str]:
+    # Remove from database
+    session.delete(session.get(Shipment, id))
+    session.commit()
+
+    return {"detail": f"Shipment with id #{id} is deleted!"}
 
 
 ### Scalar API Documentation
