@@ -27,7 +27,7 @@ class ShipmentStatus(str, Enum):
 class BaseShipment(BaseModel):
     content: str
     weight: float = Field(le=25)
-    destination: int
+    #destination: int
 
 
 class ShipmentRead(BaseShipment):
@@ -41,5 +41,5 @@ class ShipmentCreate(BaseShipment):
 class ShipmentUpdate(BaseModel):
     content: str | None = Field(default=None)
     weight: float | None = Field(default=None, le=25)
-    destination: int | None = Field(default=None)
+    #destination: int | None = Field(default=None)
     status: ShipmentStatus
