@@ -2,18 +2,18 @@ from fastapi import FastAPI, HTTPException, status
 from scalar_fastapi import get_scalar_api_reference
 
 from .schemas import ShipmentCreate, ShipmentRead, ShipmentUpdate
-
+from .database import save, shipments
 
 app = FastAPI()
 
 ### Shipments datastore as dict
-shipments = {
-    12701: {"weight": 8.2, "content": "aluminum sheets", "status": "placed", "destination": 11002},
-    12702: {"weight": 14.7, "content": "steel rods", "status": "shipped", "destination": 11003},
-    12703: {"weight": 11.4, "content": "copper wires", "status": "delivered", "destination": 11002},
-    12704: {"weight": 17.8, "content": "iron plates", "status": "in transit", "destination": 11005},
-    12705: {"weight": 10.3, "content": "brass fittings", "status": "returned", "destination": 11008},
-}
+# shipments = {
+#     12701: {"weight": 8.2, "content": "aluminum sheets", "status": "placed", "destination": 11002},
+#     12702: {"weight": 14.7, "content": "steel rods", "status": "shipped", "destination": 11003},
+#     12703: {"weight": 11.4, "content": "copper wires", "status": "delivered", "destination": 11002},
+#     12704: {"weight": 17.8, "content": "iron plates", "status": "in transit", "destination": 11005},
+#     12705: {"weight": 10.3, "content": "brass fittings", "status": "returned", "destination": 11008},
+# }
 
 
 ###  a shipment by id
@@ -37,8 +37,10 @@ def submit_shipment(shipment: ShipmentCreate) -> dict[str, int]:
     # Add to shipments dict
     shipments[new_id] = {
         **shipment.model_dump(),
+        "id": new_id,
         "status": "placed",
     }
+    save()
     # Return id for later use
     return {"id": new_id}
 
@@ -48,6 +50,7 @@ def submit_shipment(shipment: ShipmentCreate) -> dict[str, int]:
 def update_shipment(id: int, body: ShipmentUpdate):
     # Update data with given fields
     shipments[id].update(body.model_dump(exclude_none=True))
+    save()
     return shipments[id]
 
 
