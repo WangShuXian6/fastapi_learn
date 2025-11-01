@@ -13,3 +13,4 @@ pip install "fastapi[all]" scalar-fastapi sqlmodel sqlalchemy[asyncio] asyncpg s
 pip freeze > requirements.txt
 
 pip install -r requirements.txt
+
